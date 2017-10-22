@@ -1,0 +1,12 @@
+*.DS_Store
+.pioenvs
+.pioenvs\
+.piolibdeps
+platformio.ini
+*.travis.yml
+.travis.yml
+*.yml
+*.ini
+*.orig
+/bin
+*.app
