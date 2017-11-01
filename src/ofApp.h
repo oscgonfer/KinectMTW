@@ -6,9 +6,29 @@
 #include "ofxOsc.h"
 #include <sstream>
 #include <string>
+#include <vector>
+#include <algorithm>
+#include <iostream>
 
 #define HOST "localhost"
 #define PORT_OSC 53000
+
+struct sortClass {
+    bool operator() (int i, int j) {return(i<j);}
+} sortObject;
+
+struct MyComparator
+{
+    const vector<float> & value_vector;
+    
+    MyComparator(const vector<float> & val_vec):
+    value_vector(val_vec) {}
+    
+    bool operator()(int i1, int i2)
+    {
+        return value_vector[i1] < value_vector[i2];
+    }
+};
 
 class ofApp : public ofBaseApp{
 
@@ -35,7 +55,6 @@ class ofApp : public ofBaseApp{
     ofxCvContourFinder contourFinder;
     
     bool bThreshWithOpenCV;
-    bool bDrawPointCloud;
     
     int nearThreshold;
     int farThreshold;
@@ -52,7 +71,7 @@ class ofApp : public ofBaseApp{
     float boxDistanceX;
     float boxDistanceY;
 
-    int totNumBox;
+    #define totNumBox 4
     int minArea;
     
     int drawingAreaX;
@@ -62,16 +81,19 @@ class ofApp : public ofBaseApp{
     
     double boxHorSize;
     double boxVerSize;
-    
-    bool isBox;
-    bool inPosition;
-    
+
     ofVec4f gridX;
     ofVec4f gridY;
+
+    int arrayRequesting[totNumBox][totNumBox][totNumBox];
+    int arrayPlaying[totNumBox][totNumBox][totNumBox];
+    float arrayTime[totNumBox][totNumBox][totNumBox];
+    int arrayPotentialFade[totNumBox][totNumBox][totNumBox];
+    int layerGrid = 0;
+    int timePermanentCue = 5;
+    #define maxPermanentCuesAtMax 4
+    int maxPermanentCues = maxPermanentCuesAtMax + 4;
     
-    
-    // used for viewing the point cloud
-    ofEasyCam easyCam;
-    
+    // used for sending the osc messages to qlab
     ofxOscSender sender;
 };

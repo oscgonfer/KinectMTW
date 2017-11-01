@@ -15,8 +15,6 @@ void ofApp::setup(){
     //kinect.init(false, false); // disable video image (faster fps)
     
     kinect.open();		// opens first available kinect
-    //kinect.open(1);	// open a kinect by id, starting with 0 (sorted by serial # lexicographically))
-    //kinect.open("A00362A08602047A");	// open a kinect using it's unique serial #
     
     // print the intrinsic IR sensor values
     if(kinect.isConnected()) {
@@ -34,11 +32,20 @@ void ofApp::setup(){
     nearThreshold = 235;
     farThreshold = 229;
     
+    bThreshWithOpenCV = true;
+    
+    ofSetFrameRate(60);
+    
+    // zero the KINECT - tilt on startup
+    angle = 0;
+    kinect.setCameraTiltAngle(angle);
+    
+    // BOX PARAMETERS AND AREA
+    
     minArea = 30;
-    boxPixelSize = 100;
+    boxPixelSize = 50;
     
     boxSize = 300;
-    totNumBox = 4;
     roomSizeX = 4000;
     roomSizeY = 3800;
 
@@ -54,20 +61,42 @@ void ofApp::setup(){
     
     boxHorSize = boxSize/roomSizeX*drawingAreaX;
     boxVerSize = boxSize/roomSizeY*drawingAreaY;
-
-    bThreshWithOpenCV = true;
-    isBox = false;
-    inPosition = false;
     
-    ofSetFrameRate(60);
+    for (int n=0; n<totNumBox; n++) {
+        for (int m=0; m<totNumBox; m++){
+            for (int o =0; o<totNumBox; o++){
+                arrayRequesting [n][m][o]=0;
+                arrayPlaying [n][m][o]=0;
+                arrayTime [n][m][o]=0;
+                arrayPotentialFade [n][m][o]=0;
+            }
+        }
+    }
     
-    // zero the tilt on startup
-    angle = 0;
-    kinect.setCameraTiltAngle(angle);
     
-    // start from the front
-    bDrawPointCloud = false;
-
+    // GRID DEFINITION
+    float gridLineX = 0;
+    float gridLineY = 0;
+    double boxLeft = 0;
+    double boxTop = 0;
+    
+    //HORIZONTAL GRID
+    ofSetColor(120,255,255);
+    
+    for (int auxX= 0; auxX < totNumBox; auxX+=1) {
+        boxLeft = (boxWallDistanceX + (boxSize+boxDistanceX)*auxX)/roomSizeX;
+        gridLineX = boxLeft*drawingAreaX+drawingPositionX;
+        gridX [auxX] = gridLineX;
+    }
+    
+    // VERTICAL GRID
+    ofSetColor(190,0,255);
+    
+    for (int auxY = 0;  auxY< totNumBox; auxY++) {
+        boxTop = (boxWallDistanceY+(boxSize+boxDistanceY)*auxY)/roomSizeY;
+        gridLineY = boxTop*drawingAreaY+drawingPositionY;
+        gridY [auxY] = gridLineY;
+    }
 }
 
 //--------------------------------------------------------------
@@ -120,101 +149,193 @@ void ofApp::draw(){
     
     ofSetColor(255, 255, 255);
     
-    if(bDrawPointCloud) {
-        easyCam.begin();
-        drawPointCloud();
-        easyCam.end();
-    } else {
-        // draw from the live kinect
-        kinect.drawDepth(10, 10, drawingAreaX, drawingAreaY);
-        kinect.draw(drawingPositionX, 10, drawingAreaX, drawingAreaY);
-        contourFinder.draw(drawingPositionX, 10, drawingAreaX, drawingAreaY);
+    // draw from the live kinect
+    // depth IR
+    kinect.drawDepth(10, 10, drawingAreaX, drawingAreaY);
+    // RGB
+    kinect.draw(drawingPositionX, 10, drawingAreaX, drawingAreaY);
+    contourFinder.draw(drawingPositionX, 10, drawingAreaX, drawingAreaY);
+    // depth contour
+    grayImage.draw(10, drawingPositionY, drawingAreaX, drawingAreaY);
+    contourFinder.draw(10, drawingPositionY, drawingAreaX, drawingAreaY);
+
+    //BOX DETECTION
+    ofColor c(255, 255, 255);
+    ofColor backC(150, 150, 150);
+    ofRectangle backR(drawingPositionX,drawingPositionY, drawingAreaX, drawingAreaY);
+    ofSetColor(backC);
+    ofDrawRectangle(backR);
+
+    // DRAW GRID
+
+    //HORIZONTAL GRID
+    ofSetColor(120,255,255);
+    
+    for (int auxX= 0; auxX < totNumBox; auxX+=1) {
+        ofDrawLine(gridX [auxX],drawingPositionY,gridX [auxX],drawingPositionY+drawingAreaY);
+        ofDrawLine(gridX [auxX]+boxHorSize,drawingPositionY,gridX [auxX]+boxSize/roomSizeX*drawingAreaX,drawingPositionY+drawingAreaY);
+    }
+    
+    // VERTICAL GRID
+    ofSetColor(190,0,255);
+    
+    for (int auxY = 0;  auxY< totNumBox; auxY++) {
+        ofDrawLine(drawingPositionX,gridY [auxY],drawingPositionX+drawingAreaX,gridY [auxY]);
+        ofDrawLine(drawingPositionX,gridY [auxY]+boxVerSize,drawingPositionX+drawingAreaX,gridY [auxY]+boxSize/roomSizeY*   drawingAreaY);
+    }
+    
+    // Find contours
+    for(int i = 0; i < contourFinder.nBlobs; i++) {
+        ofRectangle r = contourFinder.blobs.at(i).boundingRect;
         
-        grayImage.draw(10, drawingPositionY, drawingAreaX, drawingAreaY);
-        contourFinder.draw(10, drawingPositionY, drawingAreaX, drawingAreaY);
-
-    
-        //BOX DETECTION
-        ofColor c(255, 255, 255);
-        ofColor backC(150, 150, 150);
-        ofRectangle backR(drawingPositionX,drawingPositionY, drawingAreaX, drawingAreaY);
-        ofSetColor(backC);
-        ofDrawRectangle(backR);
-    
-        float gridLineX = 0;
-        float gridLineY = 0;
-        double boxLeft = 0;
-        double boxTop = 0;
-    
-        //HORIZONTAL GRID
-        ofSetColor(120,255,255);
-    
-        for (int auxX= 0; auxX < 4; auxX+=1) {
-            boxLeft = (boxWallDistanceX + (boxSize+boxDistanceX)*auxX)/roomSizeX;
-            gridLineX = boxLeft*drawingAreaX+drawingPositionX;
-            gridX [auxX] = gridLineX;
-            ofDrawLine(gridLineX,drawingPositionY,gridLineX,drawingPositionY+drawingAreaY);
-            ofDrawLine(gridLineX+boxHorSize,drawingPositionY,gridLineX+boxSize/roomSizeX*drawingAreaX,drawingPositionY+drawingAreaY);
-        }
-    
-        // VERTICAL GRID
-        ofSetColor(190,0,255);
-    
-        for (int auxY = 0;  auxY< 4; auxY++) {
-            boxTop = (boxWallDistanceY+(boxSize+boxDistanceY)*auxY)/roomSizeY;
-            gridLineY = boxTop*drawingAreaY+drawingPositionY;
-            gridY [auxY] = gridLineY;
-            ofDrawLine(drawingPositionX,gridLineY,drawingPositionX+drawingAreaX,gridLineY);
-            ofDrawLine(drawingPositionX,gridLineY+boxVerSize,drawingPositionX+drawingAreaX,gridLineY+boxSize/roomSizeY*drawingAreaY);
-        }
-    
-        for(int i = 0; i < contourFinder.nBlobs; i++) {
-            ofRectangle r = contourFinder.blobs.at(i).boundingRect;
-            ofPoint p = contourFinder.blobs.at(i).centroid;
-            p.x /= kinect.width;
-            p.x *= drawingAreaX;
-            p.x += drawingPositionX;
-            p.y /= kinect.height;
-            p.y *= drawingAreaY;
-            p.y += drawingPositionY;
-            r.x /= kinect.width;
-            r.x *= drawingAreaX;
-            r.x += drawingPositionX;
-            r.y /= kinect.height;
-            r.y *= drawingAreaY;
-            r.y += drawingPositionY;
-            r.width /= kinect.width;
-            r.width *= drawingAreaX;
-            r.height /= kinect.height;
-            r.height *= drawingAreaY;
-            
-            
-            if (contourFinder.blobs.at(i).area > boxPixelSize) isBox = true;
-
-            for (int countGridX = 0; countGridX < totNumBox; countGridX++)
-            {
-                for (int countGridY = 0; countGridY < totNumBox; countGridY++){
-                    if (p.x>gridX[countGridX] && p.x < (gridX[countGridX] + boxHorSize) && p.y > gridY[countGridY] && p.y < (gridY[countGridY]+boxVerSize)){
-                        inPosition = true;
-                        ofxOscMessage m;
-                        
-                        m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ "/start");
-                        sender.sendMessage( m );
+        //POINT REMAPPING
+        /*
+        ofPoint p = contourFinder.blobs.at(i).centroid;
+        p.x /= kinect.width;
+        p.x *= drawingAreaX;
+        p.x += drawingPositionX;
+        p.y /= kinect.height;
+        p.y *= drawingAreaY;
+        p.y += drawingPositionY;
+        */
+        
+        ofPoint p;
+        p.x = mouseX;
+        p.y = mouseY;
+        p.x /= ofGetWidth();
+        p.x *= drawingAreaX;
+        p.x += drawingPositionX;
+        p.y /= ofGetHeight();
+        p.y *= drawingAreaY;
+        p.y += drawingPositionY;
+        // RECTANGLE REMAPPING
+        r.x /= kinect.width;
+        r.x *= drawingAreaX;
+        r.x += drawingPositionX;
+        r.y /= kinect.height;
+        r.y *= drawingAreaY;
+        r.y += drawingPositionY;
+        r.width /= kinect.width;
+        r.width *= drawingAreaX;
+        r.height /= kinect.height;
+        r.height *= drawingAreaY;
+        
+        std::vector<int> vectorPermanentCue (0);
+        std::vector <float> vectorPermanentCueTime (0);
+        std::vector<int>::iterator it;
+        std::vector<float>::iterator it2;
+        
+        it = vectorPermanentCue.begin();
+        it2 = vectorPermanentCueTime.begin();
+        int lengthVectorPermanentCue = 1;
+        
+        // CHECK BLOB POSITION AND TRIGGER OSC MESSAGES
+        for (int countGridX = 0; countGridX < totNumBox; countGridX++)
+        {
+            for (int countGridY = 0; countGridY < totNumBox; countGridY++){
+                if (p.x>gridX[countGridX] && p.x < (gridX[countGridX] + boxHorSize) && p.y > gridY[countGridY] && p.y < (gridY[countGridY]+boxVerSize)){
+                    //if (arrayPlaying[countGridX][countGridY][layerGrid] == 0){
+                    arrayRequesting[countGridX][countGridY][layerGrid] = 1;
+                    //} else {
+                        //arrayRequesting[countGridX][countGridY][layerGrid] = 0;
+                    //}
+                } else {
+                    if (arrayPlaying[countGridX][countGridY][layerGrid] == 1){
+                        arrayRequesting[countGridX][countGridY][layerGrid] = 0;
+                        if (ofGetElapsedTimef() - arrayTime[countGridX][countGridY][layerGrid] < timePermanentCue) {
+                            arrayTime[countGridX][countGridY][layerGrid] = 0;
+                        }
+                    } else {
+                        arrayRequesting[countGridX][countGridY][layerGrid] = 0;
+                        arrayTime[countGridX][countGridY][layerGrid] = 0;
+                    }
+                }
+                
+                if (arrayRequesting[countGridX][countGridY][layerGrid] == 1 && arrayPlaying[countGridX][countGridY][layerGrid] == 0){
+                    ofxOscMessage m;
+                    m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/start");
+                    sender.sendMessage(m);
+                    m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/sliderLevel/0 0");
+                    sender.sendMessage(m);
+                    arrayPlaying[countGridX][countGridY][layerGrid] = 1;
+                    arrayTime[countGridX][countGridY][layerGrid] = ofGetElapsedTimef();
+                    arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
+                } else {
+                    if (arrayRequesting[countGridX][countGridY][layerGrid] == 0) {
+                        if (ofGetElapsedTimef()-arrayTime[countGridX][countGridY][layerGrid] > timePermanentCue){
+                            arrayPotentialFade[countGridX][countGridY][layerGrid] = 1;
+                        } else {
+                            ofxOscMessage m;
+                            m.setAddress("/cue/"+ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/stopbiii");
+                            sender.sendMessage(m);
+                            arrayPlaying[countGridX][countGridY][layerGrid] = 0;
+                            arrayTime[countGridX][countGridY][layerGrid] = 0;
+                            arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
+                        }
+                    }
+                }
+                
+                if (arrayPlaying[countGridX][countGridY][layerGrid] == 1){
+                    c.setHsb(i * 64, 255, 255);
+                    ofSetColor(c);
+                    ofDrawRectangle(r);
+                    if (arrayPotentialFade[countGridX][countGridY][layerGrid] == 1) {
+                        it = vectorPermanentCue.insert(it, (countGridX+1)*100+(countGridY+1)*10+layerGrid);
+                        it2 = vectorPermanentCueTime.insert(it2, arrayTime[countGridX][countGridY][layerGrid]);
+                        lengthVectorPermanentCue++;
                     }
                 }
             }
-
-            if (isBox && inPosition) {
-                c.setHsb(i * 64, 255, 255);
-                ofSetColor(c);
-                ofDrawRectangle(r);
-            }
-            inPosition=false;
-            isBox=false;
-            contourFinder.draw(drawingPositionX, drawingPositionY, drawingAreaX, drawingAreaY);
         }
-    
+        
+        if (lengthVectorPermanentCue > maxPermanentCuesAtMax) {
+            //SORT THE VALUES FROM THE vectorPermanentCue at the vectorPermanentCueTime Order
+            std::sort(vectorPermanentCue.begin(), vectorPermanentCue.end(), MyComparator(vectorPermanentCueTime));
+            
+            for (int i = 1; i < lengthVectorPermanentCue;i++){ //we start at 1
+                ofxOscMessage m;
+                if (i<maxPermanentCuesAtMax+1){
+                    //SET NORMAL LEVEL HERE
+                    m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
+                } else {
+                    if (i>maxPermanentCues) {
+                        m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/stop");
+                    } else {
+                        switch (i) {
+                            case maxPermanentCuesAtMax + 1:
+                                //SET FIRST DROP DOWN LEVEL
+                                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -6");
+                                break;
+                            case maxPermanentCuesAtMax + 2:
+                                //SET SECOND DROP DOWN LEVEL
+                                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -12");
+                                break;
+                            case maxPermanentCuesAtMax + 3:
+                                //SET THIRD DROP DOWN LEVEL
+                                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -18");
+                                break;
+                            case maxPermanentCuesAtMax + 4:
+                                //SET LAST DROP DOWN LEVEL
+                                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -25");
+                                break;
+                        }
+                    }
+                }
+                sender.sendMessage(m);
+            }
+        } else {
+            for (int i = 1; i < lengthVectorPermanentCue;i++){
+                //SET NORMAL LEVEL HERE
+                ofxOscMessage m;
+                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
+                sender.sendMessage(m);
+            }
+        }
+        
+        // DRAW ALL CONTOURS ON TOP OF THE DETECTED ONES
+        contourFinder.draw(drawingPositionX, drawingPositionY, drawingAreaX, drawingAreaY);
     }
+    
     // draw instructions
     ofSetColor(255, 255, 255);
     stringstream reportStream;
@@ -245,31 +366,6 @@ void ofApp::draw(){
     ofDrawBitmapString(reportStream.str(), 20, 552);
 }
 
-void ofApp::drawPointCloud(){
-    int w = 640;
-    int h = 480;
-    ofMesh mesh;
-    mesh.setMode(OF_PRIMITIVE_POINTS);
-    int step = 2;
-    for(int y = 0; y < h; y += step) {
-        for(int x = 0; x < w; x += step) {
-            if(kinect.getDistanceAt(x, y) > 0) {
-                mesh.addColor(kinect.getColorAt(x,y));
-                mesh.addVertex(kinect.getWorldCoordinateAt(x, y));
-            }
-        }
-    }
-    glPointSize(3);
-    ofPushMatrix();
-    // the projected points are 'upside down' and 'backwards'
-    ofScale(1, -1, -1);
-    ofTranslate(0, 0, -1000); // center the points a bit
-    ofEnableDepthTest();
-    mesh.drawVertices();
-    ofDisableDepthTest();
-    ofPopMatrix();
-
-}
 //--------------------------------------------------------------
 void ofApp::exit() {
     kinect.setCameraTiltAngle(0); // zero the tilt on exit
@@ -282,10 +378,6 @@ void ofApp::keyPressed (int key) {
     switch (key) {
         case ' ':
             bThreshWithOpenCV = !bThreshWithOpenCV;
-            break;
-            
-        case'p':
-            bDrawPointCloud = !bDrawPointCloud;
             break;
             
         case '>':
