@@ -53,14 +53,7 @@ void ofApp::setup(){
     boxWallDistanceY = 700;
     boxDistanceX = (roomSizeX-(totNumBox*boxSize+2*boxWallDistanceX))/(totNumBox-1);
     boxDistanceY = (roomSizeY-(totNumBox*boxSize+2*boxWallDistanceY))/(totNumBox-1);
-    
-    drawingAreaX = 350;
-    drawingAreaY = 250;
-    drawingPositionX = 420;
-    drawingPositionY = 270;
-    
-    boxHorSize = boxSize/roomSizeX*drawingAreaX;
-    boxVerSize = boxSize/roomSizeY*drawingAreaY;
+
     
     for (int n=0; n<totNumBox; n++) {
         for (int m=0; m<totNumBox; m++){
@@ -69,34 +62,14 @@ void ofApp::setup(){
                 arrayPlaying [n][m][o]=0;
                 arrayTime [n][m][o]=0;
                 arrayPotentialFade [n][m][o]=0;
+                arrayLastTimePlayed [n][m][o]=0;
             }
         }
     }
     
+    displayCal = false;
+    mouseControl = false;
     
-    // GRID DEFINITION
-    float gridLineX = 0;
-    float gridLineY = 0;
-    double boxLeft = 0;
-    double boxTop = 0;
-    
-    //HORIZONTAL GRID
-    ofSetColor(120,255,255);
-    
-    for (int auxX= 0; auxX < totNumBox; auxX+=1) {
-        boxLeft = (boxWallDistanceX + (boxSize+boxDistanceX)*auxX)/roomSizeX;
-        gridLineX = boxLeft*drawingAreaX+drawingPositionX;
-        gridX [auxX] = gridLineX;
-    }
-    
-    // VERTICAL GRID
-    ofSetColor(190,0,255);
-    
-    for (int auxY = 0;  auxY< totNumBox; auxY++) {
-        boxTop = (boxWallDistanceY+(boxSize+boxDistanceY)*auxY)/roomSizeY;
-        gridLineY = boxTop*drawingAreaY+drawingPositionY;
-        gridY [auxY] = gridLineY;
-    }
 }
 
 //--------------------------------------------------------------
@@ -151,13 +124,53 @@ void ofApp::draw(){
     
     // draw from the live kinect
     // depth IR
-    kinect.drawDepth(10, 10, drawingAreaX, drawingAreaY);
-    // RGB
-    kinect.draw(drawingPositionX, 10, drawingAreaX, drawingAreaY);
-    contourFinder.draw(drawingPositionX, 10, drawingAreaX, drawingAreaY);
-    // depth contour
-    grayImage.draw(10, drawingPositionY, drawingAreaX, drawingAreaY);
-    contourFinder.draw(10, drawingPositionY, drawingAreaX, drawingAreaY);
+    
+    // GRID DEFINITION
+    float gridLineX = 0;
+    float gridLineY = 0;
+    double boxLeft = 0;
+    double boxTop = 0;
+    
+    if(displayCal) {
+        drawingAreaX = ofGetWidth();
+        drawingAreaY = ofGetHeight();
+        drawingPositionX = 0;
+        drawingPositionY = 0;
+    }else {
+        drawingAreaX = 350;
+        drawingAreaY = 250;
+        drawingPositionX = 420;
+        drawingPositionY = 270;
+        
+        kinect.drawDepth(10, 10, drawingAreaX, drawingAreaY);
+        // RGB
+        kinect.draw(drawingPositionX, 10, drawingAreaX, drawingAreaY);
+        contourFinder.draw(drawingPositionX, 10, drawingAreaX, drawingAreaY);
+        // depth contour
+        grayImage.draw(10, drawingPositionY, drawingAreaX, drawingAreaY);
+        contourFinder.draw(10, drawingPositionY, drawingAreaX, drawingAreaY);
+    }
+    
+    //HORIZONTAL GRID
+    ofSetColor(120,255,255);
+    
+    boxHorSize = boxSize/roomSizeX*drawingAreaX;
+    boxVerSize = boxSize/roomSizeY*drawingAreaY;
+    
+    for (int auxX= 0; auxX < totNumBox; auxX+=1) {
+        boxLeft = (boxWallDistanceX + (boxSize+boxDistanceX)*auxX)/roomSizeX;
+        gridLineX = boxLeft*drawingAreaX+drawingPositionX;
+        gridX [auxX] = gridLineX;
+    }
+    
+    // VERTICAL GRID
+    ofSetColor(190,0,255);
+    
+    for (int auxY = 0;  auxY< totNumBox; auxY++) {
+        boxTop = (boxWallDistanceY+(boxSize+boxDistanceY)*auxY)/roomSizeY;
+        gridLineY = boxTop*drawingAreaY+drawingPositionY;
+        gridY [auxY] = gridLineY;
+    }
 
     //BOX DETECTION
     ofColor c(255, 255, 255);
@@ -184,42 +197,51 @@ void ofApp::draw(){
         ofDrawLine(drawingPositionX,gridY [auxY]+boxVerSize,drawingPositionX+drawingAreaX,gridY [auxY]+boxSize/roomSizeY*   drawingAreaY);
     }
     
+    int counterBlobs = 0;
     // Find contours
-    for(int i = 0; i < contourFinder.nBlobs; i++) {
-        ofRectangle r = contourFinder.blobs.at(i).boundingRect;
+    if (mouseControl){
+        counterBlobs = 1;
+        
+    } else {
+        counterBlobs = contourFinder.nBlobs;
+    }
+    
+    for(int i = 0; i < counterBlobs; i++) {
         
         //POINT REMAPPING
-        /*
-        ofPoint p = contourFinder.blobs.at(i).centroid;
-        p.x /= kinect.width;
-        p.x *= drawingAreaX;
-        p.x += drawingPositionX;
-        p.y /= kinect.height;
-        p.y *= drawingAreaY;
-        p.y += drawingPositionY;
-        */
-        
         ofPoint p;
-        p.x = mouseX;
-        p.y = mouseY;
-        p.x /= ofGetWidth();
-        p.x *= drawingAreaX;
-        p.x += drawingPositionX;
-        p.y /= ofGetHeight();
-        p.y *= drawingAreaY;
-        p.y += drawingPositionY;
-        // RECTANGLE REMAPPING
-        r.x /= kinect.width;
-        r.x *= drawingAreaX;
-        r.x += drawingPositionX;
-        r.y /= kinect.height;
-        r.y *= drawingAreaY;
-        r.y += drawingPositionY;
-        r.width /= kinect.width;
-        r.width *= drawingAreaX;
-        r.height /= kinect.height;
-        r.height *= drawingAreaY;
         
+        if (mouseControl){
+            p.x = mouseX;
+            p.y = mouseY;
+            p.x /= kinect.width;
+            p.x *= drawingAreaX;
+            p.x += drawingPositionX;
+            p.y /= kinect.height;
+            p.y *= drawingAreaY;
+            p.y += drawingPositionY;
+        }else{
+            ofRectangle r = contourFinder.blobs.at(i).boundingRect;
+            p.x /= ofGetWidth();
+            p.x *= drawingAreaX;
+            p.x += drawingPositionX;
+            p.y /= ofGetHeight();
+            p.y *= drawingAreaY;
+            p.y += drawingPositionY;
+       
+            // RECTANGLE REMAPPING
+            r.x /= kinect.width;
+            r.x *= drawingAreaX;
+            r.x += drawingPositionX;
+            r.y /= kinect.height;
+            r.y *= drawingAreaY;
+            r.y += drawingPositionY;
+            r.width /= kinect.width;
+            r.width *= drawingAreaX;
+            r.height /= kinect.height;
+            r.height *= drawingAreaY;
+        }
+
         std::vector<int> vectorPermanentCue (0);
         std::vector <float> vectorPermanentCueTime (0);
         std::vector<int>::iterator it;
@@ -236,11 +258,12 @@ void ofApp::draw(){
                 if (p.x>gridX[countGridX] && p.x < (gridX[countGridX] + boxHorSize) && p.y > gridY[countGridY] && p.y < (gridY[countGridY]+boxVerSize)){
                     //if (arrayPlaying[countGridX][countGridY][layerGrid] == 0){
                     arrayRequesting[countGridX][countGridY][layerGrid] = 1;
-                    //} else {
+         	           //} else {
                         //arrayRequesting[countGridX][countGridY][layerGrid] = 0;
                     //}
                 } else {
-                    if (arrayPlaying[countGridX][countGridY][layerGrid] == 1){
+                    arrayRequesting[countGridX][countGridY][layerGrid] = 0;
+                    /*if (arrayPlaying[countGridX][countGridY][layerGrid] == 1){
                         arrayRequesting[countGridX][countGridY][layerGrid] = 0;
                         if (ofGetElapsedTimef() - arrayTime[countGridX][countGridY][layerGrid] < timePermanentCue) {
                             arrayTime[countGridX][countGridY][layerGrid] = 0;
@@ -248,7 +271,7 @@ void ofApp::draw(){
                     } else {
                         arrayRequesting[countGridX][countGridY][layerGrid] = 0;
                         arrayTime[countGridX][countGridY][layerGrid] = 0;
-                    }
+                    }*/
                 }
                 
                 if (arrayRequesting[countGridX][countGridY][layerGrid] == 1 && arrayPlaying[countGridX][countGridY][layerGrid] == 0){
@@ -261,15 +284,16 @@ void ofApp::draw(){
                     arrayTime[countGridX][countGridY][layerGrid] = ofGetElapsedTimef();
                     arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
                 } else {
-                    if (arrayRequesting[countGridX][countGridY][layerGrid] == 0) {
+                    if (arrayRequesting[countGridX][countGridY][layerGrid] == 0 && arrayTime[countGridX][countGridY][layerGrid]>0) {
                         if (ofGetElapsedTimef()-arrayTime[countGridX][countGridY][layerGrid] > timePermanentCue){
                             arrayPotentialFade[countGridX][countGridY][layerGrid] = 1;
                         } else {
                             ofxOscMessage m;
-                            m.setAddress("/cue/"+ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/stopbiii");
+                            m.setAddress("/cue/"+ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/stop");
                             sender.sendMessage(m);
                             arrayPlaying[countGridX][countGridY][layerGrid] = 0;
                             arrayTime[countGridX][countGridY][layerGrid] = 0;
+                            arrayLastTimePlayed[countGridX][countGridY][layerGrid]=ofGetElapsedTimef();
                             arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
                         }
                     }
@@ -278,7 +302,7 @@ void ofApp::draw(){
                 if (arrayPlaying[countGridX][countGridY][layerGrid] == 1){
                     c.setHsb(i * 64, 255, 255);
                     ofSetColor(c);
-                    ofDrawRectangle(r);
+                    //ofDrawRectangle(r);
                     if (arrayPotentialFade[countGridX][countGridY][layerGrid] == 1) {
                         it = vectorPermanentCue.insert(it, (countGridX+1)*100+(countGridY+1)*10+layerGrid);
                         it2 = vectorPermanentCueTime.insert(it2, arrayTime[countGridX][countGridY][layerGrid]);
@@ -296,7 +320,9 @@ void ofApp::draw(){
                 ofxOscMessage m;
                 if (i<maxPermanentCuesAtMax+1){
                     //SET NORMAL LEVEL HERE
-                    m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
+                    if (vectorPermanentCue[i]>0){
+                        m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0ty");
+                    }
                 } else {
                     if (i>maxPermanentCues) {
                         m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/stop");
@@ -356,7 +382,9 @@ void ofApp::draw(){
     << ", fps: " << ofGetFrameRate() << endl
     << "press c to close the connection and o to open it again, connection is: " << kinect.isConnected() << endl
     << "press z to decrease minArea for blob detection and x to increase " << minArea << endl
-    << "press g to increase boxSize and h to increase: " << boxPixelSize <<endl;
+    << "press g to increase boxSize and h to increase: " << boxPixelSize <<endl
+    << "press p to alternate between calibration and blob detection " << displayCal <<endl
+    << "press m to alternate between mouse and blob detection " << mouseControl <<endl;
     
     if(kinect.hasCamTiltControl()) {
         reportStream << "press UP and DOWN to change the tilt angle: " << angle << " degrees" << endl
@@ -465,6 +493,20 @@ void ofApp::keyPressed (int key) {
             break;
         case 'h':
             boxPixelSize++;
+            break;
+        case 'p':
+            if (displayCal==true) {
+                displayCal=false;
+            } else {
+                displayCal = true;
+            }
+            break;
+        case 'm':
+            if (mouseControl==true) {
+                mouseControl=false;
+            } else {
+                mouseControl = true;
+            }
             break;
     }
 }

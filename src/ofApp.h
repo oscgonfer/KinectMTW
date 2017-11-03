@@ -89,10 +89,14 @@ class ofApp : public ofBaseApp{
     int arrayPlaying[totNumBox][totNumBox][totNumBox];
     float arrayTime[totNumBox][totNumBox][totNumBox];
     int arrayPotentialFade[totNumBox][totNumBox][totNumBox];
+    float arrayLastTimePlayed[totNumBox][totNumBox][totNumBox];
     int layerGrid = 0;
     int timePermanentCue = 5;
     #define maxPermanentCuesAtMax 4
     int maxPermanentCues = maxPermanentCuesAtMax + 4;
+    
+    bool displayCal;
+    bool mouseControl;
     
     // used for sending the osc messages to qlab
     ofxOscSender sender;
