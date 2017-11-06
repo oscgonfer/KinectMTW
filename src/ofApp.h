@@ -82,8 +82,10 @@ class ofApp : public ofBaseApp{
     double boxHorSize;
     double boxVerSize;
 
-    ofVec4f gridX;
-    ofVec4f gridY;
+    float gridXR[totNumBox];
+    float gridYR[totNumBox];
+    float gridXL[totNumBox];
+    float gridYL[totNumBox];
 
     int arrayRequesting[totNumBox][totNumBox][totNumBox];
     int arrayPlaying[totNumBox][totNumBox][totNumBox];
@@ -94,9 +96,19 @@ class ofApp : public ofBaseApp{
     int timePermanentCue = 5;
     #define maxPermanentCuesAtMax 4
     int maxPermanentCues = maxPermanentCuesAtMax + 4;
+    int lengthVectorPermanentCuePrev = 1000;
     
-    bool displayCal;
+    bool displayCal = true;
     bool mouseControl;
+    bool fadedCues = false;
+    
+    bool gridRight = false;
+    bool gridLeft = false;
+    bool GridCal = false;
+    bool VerticalCal = false;
+    bool HorizontalCal = false;
+    int indexGrid = 0;
+    
     
     // used for sending the osc messages to qlab
     ofxOscSender sender;
