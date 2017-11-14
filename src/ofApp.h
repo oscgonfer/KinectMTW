@@ -9,9 +9,13 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include "ofxSimpleSerial.h"
+
 
 #define HOST "localhost"
-#define PORT_OSC 53000
+#define PORT_OSC_QLAB 53000
+//#define PORT_OSC_DLIGHT 7000
+
 
 struct sortClass {
     bool operator() (int i, int j) {return(i<j);}
@@ -93,6 +97,7 @@ class ofApp : public ofBaseApp{
     int arrayPotentialFade[totNumBox][totNumBox][totNumBox];
     float arrayLastTimePlayed[totNumBox][totNumBox][totNumBox];
     int layerGrid = 0;
+    bool resetAll = false;
     int timePermanentCue = 5;
     #define maxPermanentCuesAtMax 4
     int maxPermanentCues = maxPermanentCuesAtMax + 4;
@@ -111,5 +116,14 @@ class ofApp : public ofBaseApp{
     
     
     // used for sending the osc messages to qlab
-    ofxOscSender sender;
+    ofxOscSender sender_QLAB;
+    //ofxOscSender sender_DLIGHT;
+    
+    //SERIAL
+    ofxSimpleSerial	Serial;
+    ofSerialDeviceInfo SerialInfo;
+    
+    string		messageSerial;
+
+    
 };

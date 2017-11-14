@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:/Users/macoscar/Documents/05_OpenFrameworks/of_v0.9.8_osx_release/apps/myApps/myKinectMTW/KinectMTW.xcodeproj">
+      location = "self:">
    </FileRef>
 </Workspace>

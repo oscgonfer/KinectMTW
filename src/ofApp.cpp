@@ -4,8 +4,8 @@
 void ofApp::setup(){
     ofSetLogLevel(OF_LOG_VERBOSE);
     // open an outgoing connection to HOST:PORT
-    sender.setup( HOST, PORT_OSC );
-    
+    sender_QLAB.setup( HOST, PORT_OSC_QLAB );
+    //sender_DLIGHT.setup( "225.9.99.9", PORT_OSC_DLIGHT );
     
     // enable depth->video image calibration
     kinect.setRegistration(true);
@@ -95,6 +95,14 @@ void ofApp::setup(){
     
     mouseControl = false;
     
+    //Serial
+    Serial.listDevices();
+    
+    vector <ofSerialDeviceInfo> deviceList = Serial.getDeviceList();
+    cout <<"Device list size "<< ofToString(deviceList.size())<< endl;
+    
+    //FIND ARDUINO'S INDEX HERE
+    Serial.setup(0, 9600); //FIX THIS
 }
 
 //--------------------------------------------------------------
@@ -140,12 +148,51 @@ void ofApp::update(){
         contourFinder.findContours(grayImage, minArea, (kinect.width*kinect.height)/2, 20, false);
         
     }
+    
+    if(Serial.available() > 0) {
+        int LEN = 2;
+        char c[LEN + 1];
+        int numBytes = 0;
+        numBytes = Serial.readByte();
+        if (numBytes !=-2) {
+            cout << "Read from Serial " << numBytes<< endl;
+            switch (numBytes) {
+                case 1:
+                    layerGrid = 0;
+
+                    break;
+                case 2:
+                    layerGrid = 1;
+
+                    break;
+                case 3:
+                    layerGrid = 2;
+
+                    break;
+                case 4:
+                    layerGrid = 3;
+
+                    break;
+                case 48:
+                    resetAll = true;
+                    layerGrid = 0;
+                    break;
+            }
+            // SEND MESSAGE TO DLIGHT via QLAB
+            ofxOscMessage m;
+            m.setAddress("/cue/" +ofToString((layerGrid+1)*100)+"/start");
+            sender_QLAB.sendMessage(m);
+        }
+        cout << "layerGrid " << layerGrid << endl;;
+    }
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
     
     ofSetColor(255, 255, 255);
+    
+    
     
     // draw from the live kinect
     // depth IR
@@ -176,9 +223,6 @@ void ofApp::draw(){
         ofSetColor(backC);
         ofDrawRectangle(backR);
     }
-
-    
-
 
     //BOX DETECTION
 
@@ -217,7 +261,6 @@ void ofApp::draw(){
         if (mouseControl){
             //POINT REMAPPING
 
-            
             p.x = mouseX;
             p.y = mouseY;
             
@@ -231,7 +274,7 @@ void ofApp::draw(){
             stringstream reportStream2;
             reportStream2 << "P position" <<p.x<<" - "<<p.y<< endl;
 
-            ofDrawBitmapString(reportStream2.str(), 420, 600);
+            ofDrawBitmapString(reportStream2.str(), 500, 600);
         }else{
             
             p = contourFinder.blobs.at(i).centroid;
@@ -247,7 +290,7 @@ void ofApp::draw(){
             stringstream reportStream3;
             reportStream3 << "P position" <<p.x<<" - "<<p.y<< endl;
             
-            ofDrawBitmapString(reportStream3.str(), 420, 600);
+            ofDrawBitmapString(reportStream3.str(), 500, 600);
             // RECTANGLE REMAPPING
             ofRectangle r = contourFinder.blobs.at(i).boundingRect;
             
@@ -274,35 +317,55 @@ void ofApp::draw(){
         int lengthVectorPermanentCue = 0;
         bool addedCue = false;
         
+        if (resetAll){
+            ofxOscMessage m;
+            
+            m.setAddress("/PanicAll");
+            sender_QLAB.sendMessage(m);
+            // RESET EVERYTHING
+            for (int countLayer = 0; countLayer < 4; countLayer++) {
+                for (int countGridX = 0; countGridX < totNumBox; countGridX++){
+                    for (int countGridY = 0; countGridY < totNumBox; countGridY++){
+            
+                        m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(countLayer+1)+"/sliderLevel/0 0");
+                        sender_QLAB.sendMessage(m);
+                        arrayRequesting [countGridX][countGridY][countLayer]=0;
+                        arrayPlaying [countGridX][countGridY][countLayer]=0;
+                        arrayTime [countGridX][countGridY][countLayer]=0;
+                        arrayPotentialFade [countGridX][countGridY][countLayer]=0;
+                        arrayLastTimePlayed [countGridX][countGridY][countLayer]=0;
+                    }
+                }
+                resetAll = false;
+            }
+        }
+        
         // CHECK BLOB POSITION AND TRIGGER OSC MESSAGES
         for (int countGridX = 0; countGridX < totNumBox; countGridX++)
         {
             for (int countGridY = 0; countGridY < totNumBox; countGridY++){
+                
                 if (p.x>gridXL[countGridX] && p.x < (gridXR[countGridX]) && p.y > gridYL[countGridY] && p.y < (gridYR[countGridY])){
-                    //if (arrayPlaying[countGridX][countGridY][layerGrid] == 0){
+
                     arrayRequesting[countGridX][countGridY][layerGrid] = 1;
-         	           //} else {
-                        //arrayRequesting[countGridX][countGridY][layerGrid] = 0;
-                    //}
+
                 } else {
+                    
                     arrayRequesting[countGridX][countGridY][layerGrid] = 0;
-                    /*if (arrayPlaying[countGridX][countGridY][layerGrid] == 1){
-                        arrayRequesting[countGridX][countGridY][layerGrid] = 0;
-                        if (ofGetElapsedTimef() - arrayTime[countGridX][countGridY][layerGrid] < timePermanentCue) {
-                            arrayTime[countGridX][countGridY][layerGrid] = 0;
-                        }
-                    } else {
-                        arrayRequesting[countGridX][countGridY][layerGrid] = 0;
-                        arrayTime[countGridX][countGridY][layerGrid] = 0;
-                    }*/
+
                 }
                 
                 if (arrayRequesting[countGridX][countGridY][layerGrid] == 1 && arrayPlaying[countGridX][countGridY][layerGrid] == 0){
+                    // SEND MESSAGE TO QLAB
                     ofxOscMessage m;
+                    
                     m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/start");
-                    sender.sendMessage(m);
+                    sender_QLAB.sendMessage(m);
+                    
                     m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/sliderLevel/0 0");
-                    sender.sendMessage(m);
+                    sender_QLAB.sendMessage(m);
+                    
+                    
                     arrayPlaying[countGridX][countGridY][layerGrid] = 1;
                     arrayTime[countGridX][countGridY][layerGrid] = ofGetElapsedTimef();
                     arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
@@ -316,7 +379,7 @@ void ofApp::draw(){
                         } else {
                             ofxOscMessage m;
                             m.setAddress("/cue/"+ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/stop");
-                            sender.sendMessage(m);
+                            sender_QLAB.sendMessage(m);
                             arrayPlaying[countGridX][countGridY][layerGrid] = 0;
                             arrayTime[countGridX][countGridY][layerGrid] = 0;
                             arrayLastTimePlayed[countGridX][countGridY][layerGrid]=ofGetElapsedTimef();
@@ -381,14 +444,14 @@ void ofApp::draw(){
                         }
                     }
                 }
-                sender.sendMessage(m);
+                sender_QLAB.sendMessage(m);
             }
         } /*else {
             for (int i = 1; i < lengthVectorPermanentCue;i++){
                 //SET NORMAL LEVEL HERE
                 ofxOscMessage m;
                 m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
-                sender.sendMessage(m);
+                sender_QLAB.sendMessage(m);
             }
         }*/
         

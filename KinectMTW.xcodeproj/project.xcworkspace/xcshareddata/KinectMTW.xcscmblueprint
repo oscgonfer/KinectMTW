@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "2DE000CF8DF6F04394E4C95CB5FF164C1A630C36",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "2DE000CF8DF6F04394E4C95CB5FF164C1A630C36" : 9223372036854775807,
+    "79710ABA001801E56388A968BB7C3A67C00D91B0" : 9223372036854775807
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "4787848F-CF7F-412D-A149-7821F66331D1",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "2DE000CF8DF6F04394E4C95CB5FF164C1A630C36" : "KinectMTW\/",
+    "79710ABA001801E56388A968BB7C3A67C00D91B0" : "..\/..\/addons\/ofxSimpleSerial"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "KinectMTW",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "KinectMTW.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/oscgonfer\/KinectMTW",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "2DE000CF8DF6F04394E4C95CB5FF164C1A630C36"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/LeoColomb\/ofxSimpleSerial",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "79710ABA001801E56388A968BB7C3A67C00D91B0"
+    }
+  ]
+}
