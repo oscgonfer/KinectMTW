@@ -18,7 +18,12 @@ bool buttonA2 = false; //LAYER 2
 bool buttonA3 = false; //LAYER 3
 bool buttonA4 = false; //LAYER 4
 
-int LastButtonPressed = 0;
+int LastButtonPressed = 1;
+int ButtonPressed = -1;
+int buttonPressedFadeTime = 4;
+
+float buttonDir = 0;
+float buttonLight = 0;
 
 void setup() {
     //LED
@@ -27,15 +32,9 @@ void setup() {
     pinMode(LYR2_BUTTON_LED_PIN, OUTPUT);
     pinMode(LYR3_BUTTON_LED_PIN, OUTPUT);
     pinMode(LYR4_BUTTON_LED_PIN, OUTPUT);
-
-    digitalWrite(RESET_BUTTON_LED_PIN, LOW);  
-    digitalWrite(LYR1_BUTTON_LED_PIN, HIGH);
-    digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
-    digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
-    digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
                     
     Serial.begin(9600);
-    Serial.println("all good here");    
+    Serial.println("All good here");    
 }
 
 void loop() {
@@ -64,7 +63,7 @@ void loop() {
     buttonA0 = false;
   }
 
-   if (a1val > 1000 && buttonA1 == false) {
+  if (a1val > 1000 && buttonA1 == false) {
     buttonA0 = false;
     buttonA1 = true;
     buttonA2 = false;
@@ -74,7 +73,7 @@ void loop() {
     buttonA1 = false;
   }
 
-    if (a2val > 1000 && buttonA2 == false) {
+  if (a2val > 1000 && buttonA2 == false) {
     buttonA0 = false;
     buttonA1 = false;
     buttonA2 = true;
@@ -84,7 +83,7 @@ void loop() {
     buttonA2 = false;
   }
 
-    if (a3val > 1000 && buttonA3 == false) {
+  if (a3val > 1000 && buttonA3 == false) {
     buttonA0 = false;
     buttonA1 = false;
     buttonA2 = false;
@@ -94,7 +93,7 @@ void loop() {
     buttonA3 = false;
   }
 
-    if (a4val > 1000 && buttonA4 == false) {
+  if (a4val > 1000 && buttonA4 == false) {
     buttonA0 = false;
     buttonA1 = false;
     buttonA2 = false;
@@ -104,166 +103,147 @@ void loop() {
     buttonA4 = false;
   }
 
-  //Send Serial messages
+  //SEND SERIAL MESSAGES
   if (buttonA0 == true){
     Serial.write("0");
-    LastButtonPressed = 0;
+    ButtonPressed = 0;
   }
 
   if (buttonA1 == true){
     Serial.write(1);
-    LastButtonPressed = 1;
+    ButtonPressed = 1;
   }
 
   if (buttonA2 == true){
     Serial.write(2);
-    LastButtonPressed = 2;
+    ButtonPressed = 2;
   }
 
   if (buttonA3 == true){
     Serial.write(3);
-    LastButtonPressed = 3;
+    ButtonPressed = 3;
   }
 
   if (buttonA4 == true){
     Serial.write(4);
-    LastButtonPressed = 4;
+    ButtonPressed = 4;
   }
 
-  switch (LastButtonPressed) {
+  //SEQUENCE WHEN A BUTTON HAS BEEN PRESSED
+  if (ButtonPressed != -1) {
+    ButtonPressedSeq(ButtonPressed);
+    LastButtonPressed = max(ButtonPressed,1);
+    ButtonPressed = -1;
+    buttonDir = 0;
+  }
+
+  //NORMAL SEQUENCE
+  if (LastButtonPressed != -1) {
+    FadeButton(LastButtonPressed);
+  }
+
+}
+
+void ButtonPressedSeq (int ButtonPressed) {
+  float pressTime = millis()/1000;
+  float aux = millis()/1000;
+  float buttonDirPressed = 0;
+  float buttonLightPressed = 0;
+  
+  while (aux-pressTime < buttonPressedFadeTime ) {
+    buttonDirPressed +=0.05;
+    if (buttonDirPressed >= 6.283) buttonDirPressed = 0;
+    buttonLightPressed = sin(buttonDirPressed) * 127.5 + 127.5;
+    
+    switch (ButtonPressed) {
     case 0: //RESET
-        digitalWrite(RESET_BUTTON_LED_PIN, HIGH);
-        delay(2000);
-        digitalWrite(LYR1_BUTTON_LED_PIN, HIGH);
-        digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR1_BUTTON_LED_PIN, HIGH);
-        delay(20);
-        digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR1_BUTTON_LED_PIN, HIGH);
-        digitalWrite(RESET_BUTTON_LED_PIN, LOW);
-        delay(2000);
-        LastButtonPressed = -1;
-        break;
+      //ALL TO ZERO
+      digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
+      //EXCEPT
+      analogWrite(RESET_BUTTON_LED_PIN, buttonLightPressed);
+      analogWrite(LYR1_BUTTON_LED_PIN, HIGH);
+      break;
     case 1:
-        digitalWrite(RESET_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR1_BUTTON_LED_PIN, HIGH);
-        delay(2000);
-        digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR1_BUTTON_LED_PIN, HIGH);
-        delay(20);
-        digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR1_BUTTON_LED_PIN, HIGH);
-        digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
-        
-        LastButtonPressed = -1;
-        break;
+      //ALL TO ZERO
+      digitalWrite(RESET_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
+      //EXCEPT
+      analogWrite(LYR1_BUTTON_LED_PIN, buttonLightPressed);
+      break;
     case 2:
-        digitalWrite(RESET_BUTTON_LED_PIN, LOW);        
-        digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR2_BUTTON_LED_PIN, HIGH);
-        delay(2000);
-        digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR2_BUTTON_LED_PIN, HIGH);
-        delay(20);
-        digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR2_BUTTON_LED_PIN, HIGH);        
-        digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
-        delay(2000);
-        LastButtonPressed = -1;
-        break;
+      //ALL TO ZERO
+      digitalWrite(RESET_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
+      //EXCEPT
+      analogWrite(LYR2_BUTTON_LED_PIN, buttonLightPressed);
+      break;
     case 3:
-        digitalWrite(RESET_BUTTON_LED_PIN, LOW);    
-        digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR3_BUTTON_LED_PIN, HIGH);
-        delay(2000);
-        digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR3_BUTTON_LED_PIN, HIGH);
-        delay(20);
-        digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR3_BUTTON_LED_PIN, HIGH);
-        digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
-        delay(2000);        
-        LastButtonPressed = -1;
-        break;
+      //ALL TO ZERO
+      digitalWrite(RESET_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
+      //EXCEPT
+      analogWrite(LYR3_BUTTON_LED_PIN, buttonLightPressed);
+      break;
     case 4:
-        digitalWrite(RESET_BUTTON_LED_PIN, LOW);    
-        digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
-        digitalWrite(LYR4_BUTTON_LED_PIN, HIGH);
-        delay(2000);
-        digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR4_BUTTON_LED_PIN, HIGH);
-        delay(20);
-        digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
-        delay(20);
-        digitalWrite(LYR4_BUTTON_LED_PIN, HIGH);       
-        delay(2000);
-        LastButtonPressed = -1;
-        break;
-  }
-
-  digitalWrite(RESET_BUTTON_LED_PIN, HIGH);
-  delay(10);
-  digitalWrite(RESET_BUTTON_LED_PIN, LOW);
-  delay(20);
-}
-
-/*
-void changeButton() {
-
-  stayOn = false;
-
-  analogWrite(BUTTON_LED_PIN, 255);
-  blinking = 70;
-  buttonDir = 10;
-
-  bool state = digitalRead(BUTTON_PIN);
-
-  // Debouncing
-  if (state != oldState && timeSinceLast > 20) {
-    if (state == LOW) pressed();
-    else released();
-    pressTime = millis();
-    oldState = state;
-  }
-
-  changed = false;
-}
-
-void buttonLedUpdate() {
-
-  if (!stayOn) {
-
-    if (blinking > 0) {
-      buttonLight = 255 * ((blinking / 10) % 2);
-      blinking = blinking -1;
-    } else {
-      // Sine breathing
-      buttonDir += 0.05;
-      if (buttonDir >= 6.283) buttonDir = 0;
-      buttonLight = sin(buttonDir) * 127.5 + 127.5;
+      //ALL TO ZERO
+      digitalWrite(RESET_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
+      //EXCEPT
+      analogWrite(LYR4_BUTTON_LED_PIN, buttonLightPressed);
+      break;
     }
-
-    if (!digitalRead(BUTTON_PIN)) buttonLight = 255;
-
-    analogWrite(BUTTON_LED_PIN, buttonLight);
+    aux = millis()/1000;
   }
-}*/
+}
+
+void FadeButton (int LastButtonPressed) {
+  // Sine breathing
+  buttonDir += 0.05;
+  if (buttonDir >= 6.283) buttonDir = 0;
+  buttonLight = sin(buttonDir) * 127.5 + 127.5;
+  digitalWrite(RESET_BUTTON_LED_PIN, LOW);
+  switch (LastButtonPressed) {
+    case 1:
+      //ALL TO ZERO
+      digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
+      //EXCEPT
+      analogWrite(LYR1_BUTTON_LED_PIN, buttonLight);
+      break;
+    case 2:
+      //ALL TO ZERO
+      digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
+      //EXCEPT
+      analogWrite(LYR2_BUTTON_LED_PIN, buttonLight);
+      break;
+    case 3:
+      //ALL TO ZERO
+      digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR4_BUTTON_LED_PIN, LOW);
+      //EXCEPT
+      analogWrite(LYR3_BUTTON_LED_PIN, buttonLight);
+      break;
+    case 4:
+      //ALL TO ZERO
+      digitalWrite(LYR1_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR2_BUTTON_LED_PIN, LOW);
+      digitalWrite(LYR3_BUTTON_LED_PIN, LOW);
+      //EXCEPT
+      analogWrite(LYR4_BUTTON_LED_PIN, buttonLight);
+      break;
+  }
+}
