@@ -102,7 +102,7 @@ void ofApp::setup(){
     cout <<"Device list size "<< ofToString(deviceList.size())<< endl;
     
     //FIND ARDUINO'S INDEX HERE
-    Serial.setup(0, 9600); //FIX THIS
+    Serial.setup(0, 9600); //FIX IF THIS
 }
 
 //--------------------------------------------------------------
