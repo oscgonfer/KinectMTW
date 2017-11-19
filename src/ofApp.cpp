@@ -61,24 +61,24 @@ void ofApp::setup(){
     boxDistanceY = (drawingAreaY-(totNumBox*boxSize+2*boxWallDistanceY))/(totNumBox-1);
     
     //HORIZONTAL GRID
-    gridXL[0] = boxWallDistanceX;
+    gridXL[0] = 0;
     gridXR[0] = boxWallDistanceX+boxSize;
     gridXL[1] = boxWallDistanceX+boxSize+boxDistanceX;
     gridXR[1] = boxWallDistanceX+boxSize*2+boxDistanceX;
     gridXL[2] = boxWallDistanceX+boxSize*2+boxDistanceX*2;
     gridXR[2] = boxWallDistanceX+boxSize*3+boxDistanceX*2;
     gridXL[3] = boxWallDistanceX+boxSize*3+boxDistanceX*3;
-    gridXR[3] = boxWallDistanceX+boxSize*4+boxDistanceX*3;
+    gridXR[3] = ofGetWidth();
     
     // VERTICAL GRID
-    gridYL[0] = boxWallDistanceY;
+    gridYL[0] = 0;
     gridYR[0] = boxWallDistanceY+boxSize;
     gridYL[1] = boxWallDistanceY+boxSize+boxDistanceY;
     gridYR[1] = boxWallDistanceY+boxSize*2+boxDistanceY;
     gridYL[2] = boxWallDistanceY+boxSize*2+boxDistanceY*2;
     gridYR[2] = boxWallDistanceY+boxSize*3+boxDistanceY*2;
     gridYL[3] = boxWallDistanceY+boxSize*3+boxDistanceY*3;
-    gridYR[3] = boxWallDistanceY+boxSize*4+boxDistanceY*3;
+    gridYR[3] = ofGetHeight();
 
     // INIT ARRAYS
     for (int n=0; n<totNumBox; n++) {
@@ -446,14 +446,7 @@ void ofApp::draw(){
                 }
                 sender_QLAB.sendMessage(m);
             }
-        } /*else {
-            for (int i = 1; i < lengthVectorPermanentCue;i++){
-                //SET NORMAL LEVEL HERE
-                ofxOscMessage m;
-                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
-                sender_QLAB.sendMessage(m);
-            }
-        }*/
+        }
         
         // DRAW ALL CONTOURS ON TOP OF THE DETECTED ONES
         contourFinder.draw(drawingPositionX, drawingPositionY, drawingAreaX, drawingAreaY);
@@ -473,6 +466,25 @@ void ofApp::draw(){
         << "motor / led / accel controls are not currently supported" << endl << endl;
     }
     
+    float calibrated_value = 0;
+    if (GridCal==true) {
+        if (HorizontalCal == true) {
+            if (gridRight == true) {
+                calibrated_value = gridXR[indexGrid];
+            }
+            if (gridLeft == true) {
+                calibrated_value = gridXL[indexGrid];
+            }                }
+        if (VerticalCal ==true) {
+            if (gridRight == true) {
+                calibrated_value = gridYR[indexGrid];
+            }
+            if (gridLeft == true) {
+                calibrated_value = gridYL[indexGrid];
+            }
+        }
+    }
+    
     reportStream << "press p to switch between images and point cloud, rotate the point cloud with the mouse" << endl
     << "using opencv threshold = " << bThreshWithOpenCV <<" (press spacebar)" << endl
     << "set near threshold " << nearThreshold << " (press: + -)" << endl
@@ -484,10 +496,13 @@ void ofApp::draw(){
     << "press p to alternate between calibration and blob detection " << displayCal <<endl
     << "press m to alternate between mouse and blob detection " << mouseControl <<endl
     << "Mouse position " << mouseX << " - "<< mouseY << endl
+    << "----------------------------------"<< endl
     << "Grid Size calibration on/off with k/l " << GridCal << endl
     << "Select Grid ROW / COLUMN to calibrate 1q 2w 3e 4r " << indexGrid <<endl
     << "Vertical grid calibration v/h VerticalCal " << VerticalCal << " // HorizontalCal " << HorizontalCal << endl
-    << "Left or right side grid calibration u/i gridRight " << gridRight << " // gridLeft " << gridLeft <<endl;
+    << "Left or right side grid calibration u/i gridRight " << gridRight << " // gridLeft " << gridLeft <<endl
+
+    << "Calibrated value: " <<  calibrated_value <<endl;
     
     if(kinect.hasCamTiltControl()) {
         reportStream << "press UP and DOWN to change the tilt angle: " << angle << " degrees" << endl
