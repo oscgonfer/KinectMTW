@@ -30,19 +30,19 @@ struct vectorCompare
 };
 
 class ofApp : public ofBaseApp{
-
-	public:
+    
+public:
     
     void setup();
     void update();
     void draw();
     void exit();
-        
+    
     void drawPointCloud();
     
     void keyPressed(int key);
-
-
+    
+    
     ofxKinect kinect;
     
     ofxCvColorImage colorImg;
@@ -62,21 +62,21 @@ class ofApp : public ofBaseApp{
     
     float roomSizeX;
     float roomSizeY;
-
-    #define totNumBox 4
-    int minArea = 650;
+    
+#define totNumBox 4
+    int minArea = 500;
     
     int drawingAreaX;
     int drawingAreaY;
     int drawingPositionX;
     int drawingPositionY;
-
-
+    
+    
     float gridXR[totNumBox];
     float gridYR[totNumBox];
     float gridXL[totNumBox];
     float gridYL[totNumBox];
-
+    
     int arrayRequesting[totNumBox][totNumBox][totNumBox];
     int arrayPlaying[totNumBox][totNumBox][totNumBox];
     int arrayTime[totNumBox][totNumBox][totNumBox];
@@ -89,7 +89,7 @@ class ofApp : public ofBaseApp{
     int layerGrid = 0;
     bool resetAll = false;
     int timePermanentCue = 5;
-    #define maxPermanentCuesAtMax 2
+#define maxPermanentCuesAtMax 2
     int maxPermanentCues = maxPermanentCuesAtMax + 2;
     int lengthVectorPermanentCuePrev = 1000;
     
@@ -114,6 +114,6 @@ class ofApp : public ofBaseApp{
     ofSerialDeviceInfo SerialInfo;
     
     string		messageSerial;
-
+    
     
 };
