@@ -73,7 +73,7 @@ class ofApp : public ofBaseApp{
     float boxDistanceY;
 
     #define totNumBox 4
-    int minArea;
+    int minArea = 650;
     
     int drawingAreaX;
     int drawingAreaY;
@@ -100,8 +100,8 @@ class ofApp : public ofBaseApp{
     int layerGrid = 0;
     bool resetAll = false;
     int timePermanentCue = 5;
-    #define maxPermanentCuesAtMax 4
-    int maxPermanentCues = maxPermanentCuesAtMax + 4;
+    #define maxPermanentCuesAtMax 2
+    int maxPermanentCues = maxPermanentCuesAtMax + 2;
     int lengthVectorPermanentCuePrev = 1000;
     
     bool displayCal = true;

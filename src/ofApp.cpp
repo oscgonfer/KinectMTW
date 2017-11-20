@@ -34,7 +34,7 @@ void ofApp::setup(){
     
     bThreshWithOpenCV = true;
     
-    ofSetFrameRate(60);
+    ofSetFrameRate(10);
     
     // zero the KINECT - tilt on startup
     angle = 0;
@@ -62,22 +62,22 @@ void ofApp::setup(){
     
     //HORIZONTAL GRID
     gridXL[0] = 0;
-    gridXR[0] = boxWallDistanceX+boxSize;
-    gridXL[1] = boxWallDistanceX+boxSize+boxDistanceX;
-    gridXR[1] = boxWallDistanceX+boxSize*2+boxDistanceX;
-    gridXL[2] = boxWallDistanceX+boxSize*2+boxDistanceX*2;
-    gridXR[2] = boxWallDistanceX+boxSize*3+boxDistanceX*2;
-    gridXL[3] = boxWallDistanceX+boxSize*3+boxDistanceX*3;
+    gridXR[0] = 264;
+    gridXL[1] = 328;
+    gridXR[1] = 474;
+    gridXL[2] = 558;
+    gridXR[2] = 708;
+    gridXL[3] = 794;
     gridXR[3] = ofGetWidth();
     
     // VERTICAL GRID
     gridYL[0] = 0;
-    gridYR[0] = boxWallDistanceY+boxSize;
-    gridYL[1] = boxWallDistanceY+boxSize+boxDistanceY;
-    gridYR[1] = boxWallDistanceY+boxSize*2+boxDistanceY;
-    gridYL[2] = boxWallDistanceY+boxSize*2+boxDistanceY*2;
-    gridYR[2] = boxWallDistanceY+boxSize*3+boxDistanceY*2;
-    gridYL[3] = boxWallDistanceY+boxSize*3+boxDistanceY*3;
+    gridYR[0] = 122;
+    gridYL[1] = 191;
+    gridYR[1] = 368;
+    gridYL[2] = 451;
+    gridYR[2] = 610;
+    gridYL[3] = 672;
     gridYR[3] = ofGetHeight();
 
     // INIT ARRAYS
@@ -201,8 +201,6 @@ void ofApp::draw(){
     
     ofSetColor(255, 255, 255);
     
-    
-    
     // draw from the live kinect
     // depth IR
     ofColor c(255, 255, 255);
@@ -234,7 +232,6 @@ void ofApp::draw(){
     }
 
     //BOX DETECTION
-
 
     // DRAW GRID
 
@@ -292,6 +289,16 @@ void ofApp::draw(){
         layerGrid = 0;
     }
     
+    std::vector<int> vectorPermanentCue (0);
+    std::vector<int> vectorPermanentCueTime (0);
+    std::vector<int>::iterator it;
+    std::vector<int>::iterator it2;
+    
+    it = vectorPermanentCue.begin();
+    it2 = vectorPermanentCueTime.begin();
+    int lengthVectorPermanentCue = 0;
+    
+    bool addedCue = false;
     for(int i = 0; i < counterBlobs; i++) {
         
 
@@ -313,50 +320,45 @@ void ofApp::draw(){
             reportStream2 << "P position" <<p.x<<" - "<<p.y<< endl;
 
             ofDrawBitmapString(reportStream2.str(), 500, 600);
+            
         }else{
+            //if (countourFinder.blobs.at(i).area>minArea) {
             
-            p = contourFinder.blobs.at(i).centroid;
+                p = contourFinder.blobs.at(i).centroid;
             
-            p.x /= kinect.width;
-            p.x *= drawingAreaX;
-            p.x += drawingPositionX;
+                p.x /= kinect.width;
+                p.x *= drawingAreaX;
+                p.x += drawingPositionX;
             
-            p.y /= kinect.height;
-            p.y *= drawingAreaY;
-            p.y += drawingPositionY;
+                p.y /= kinect.height;
+                p.y *= drawingAreaY;
+                p.y += drawingPositionY;
             
-            stringstream reportStream3;
-            reportStream3 << "P position" <<p.x<<" - "<<p.y<< endl;
+                stringstream reportStream3;
+                reportStream3 << "P position" <<p.x<<" - "<<p.y<< endl;
             
-            ofDrawBitmapString(reportStream3.str(), 500, 600);
-            // RECTANGLE REMAPPING
-            ofRectangle r = contourFinder.blobs.at(i).boundingRect;
+                ofDrawBitmapString(reportStream3.str(), 500, 600);
+                // RECTANGLE REMAPPING
+                /*ofRectangle r = contourFinder.blobs.at(i).boundingRect;
             
-            r.x /= kinect.width;
-            r.x *= drawingAreaX;
-            r.x += drawingPositionX;
-            r.y /= kinect.height;
-            r.y *= drawingAreaY;
-            r.y += drawingPositionY;
-            r.width /= kinect.width;
-            r.width *= drawingAreaX;
-            r.height /= kinect.height;
-            r.height *= drawingAreaY;
+                 r.x /= kinect.width;
+                 r.x *= drawingAreaX;
+                 r.x += drawingPositionX;
+                 r.y /= kinect.height;
+                 r.y *= drawingAreaY;
+                 r.y += drawingPositionY;
+                 r.width /= kinect.width;
+                 r.width *= drawingAreaX;
+                 r.height /= kinect.height;
+                 r.height *= drawingAreaY;
+                 */
+            //}
             
         }
 
-        std::vector<int> vectorPermanentCue (0);
-        std::vector<int> vectorPermanentCueTime (0);
-        std::vector<int>::iterator it;
-        std::vector<int>::iterator it2;
+        addedCue = false;
         
-        it = vectorPermanentCue.begin();
-        it2 = vectorPermanentCueTime.begin();
-        int lengthVectorPermanentCue = 0;
-        bool addedCue = false;
-        
-        
-        // CHECK BLOB POSITION AND TRIGGER OSC MESSAGES
+        // CHECK BLOB POSITION
         for (int countGridX = 0; countGridX < totNumBox; countGridX++)
         {
             for (int countGridY = 0; countGridY < totNumBox; countGridY++){
@@ -370,39 +372,52 @@ void ofApp::draw(){
                     arrayRequesting[countGridX][countGridY][layerGrid] = 0;
 
                 }
-                
-                if (arrayRequesting[countGridX][countGridY][layerGrid] == 1 && arrayPlaying[countGridX][countGridY][layerGrid] == 0){
-                    // SEND MESSAGE TO QLAB
-                    ofxOscMessage m;
+            }
+        }
+    }
+    
+    for (int countGridX = 0; countGridX < totNumBox; countGridX++)
+    {
+        for (int countGridY = 0; countGridY < totNumBox; countGridY++){
+        
+            if (arrayRequesting[countGridX][countGridY][layerGrid] == 1 && arrayPlaying[countGridX][countGridY][layerGrid] == 0){
+                // SEND MESSAGE TO QLAB
+                ofxOscMessage m;
                     
-                    m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/start");
-                    sender_QLAB.sendMessage(m);
+                m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/start");
+                sender_QLAB.sendMessage(m);
                     
-                    m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/sliderLevel/0 0");
-                    sender_QLAB.sendMessage(m);
+                m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/sliderLevel/0 0");
+                sender_QLAB.sendMessage(m);
                     
                     
-                    arrayPlaying[countGridX][countGridY][layerGrid] = 1;
-                    arrayTime[countGridX][countGridY][layerGrid] = ofGetElapsedTimef();
-                    arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
-                } else {
-                    if (arrayRequesting[countGridX][countGridY][layerGrid] == 0 && arrayTime[countGridX][countGridY][layerGrid]>0) {
-                        if (ofGetElapsedTimef()-arrayTime[countGridX][countGridY][layerGrid] > timePermanentCue){
+                arrayPlaying[countGridX][countGridY][layerGrid] = 1;
+                arrayTime[countGridX][countGridY][layerGrid] = ofGetElapsedTimef();
+                arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
+            } else {
+                if (arrayRequesting[countGridX][countGridY][layerGrid] == 0 && arrayTime[countGridX][countGridY][layerGrid]>0) {
+                    if (ofGetElapsedTimef()-arrayTime[countGridX][countGridY][layerGrid] > timePermanentCue){
                             arrayPotentialFade[countGridX][countGridY][layerGrid] = 1;
-                            if (arrayPlaying[countGridX][countGridY][layerGrid] == 1 && fadedCues == false) {
+                        if (arrayPlaying[countGridX][countGridY][layerGrid] == 1 && fadedCues == false) {
                                 addedCue=true;
-                            }
-                        } else {
-                            ofxOscMessage m;
-                            m.setAddress("/cue/"+ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/stop");
-                            sender_QLAB.sendMessage(m);
-                            arrayPlaying[countGridX][countGridY][layerGrid] = 0;
-                            arrayTime[countGridX][countGridY][layerGrid] = 0;
-                            arrayLastTimePlayed[countGridX][countGridY][layerGrid]=ofGetElapsedTimef();
-                            arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
                         }
+                    } else {
+                        ofxOscMessage m;
+                        m.setAddress("/cue/"+ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/stop");
+                        sender_QLAB.sendMessage(m);
+                        arrayPlaying[countGridX][countGridY][layerGrid] = 0;
+                        arrayTime[countGridX][countGridY][layerGrid] = 0;
+                        arrayLastTimePlayed[countGridX][countGridY][layerGrid]=ofGetElapsedTimef();
+                        arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
                     }
                 }
+            }
+        }
+        
+        
+        for (int countGridX = 0; countGridX < totNumBox; countGridX++)
+        {
+            for (int countGridY = 0; countGridY < totNumBox; countGridY++){
 
                 if (arrayPlaying[countGridX][countGridY][layerGrid] == 1){
                     if (arrayPotentialFade[countGridX][countGridY][layerGrid] == 1) {
@@ -413,116 +428,115 @@ void ofApp::draw(){
                 }
             }
         }
+    }
+    
+    if (lengthVectorPermanentCuePrev < lengthVectorPermanentCue) {
+        fadedCues = false;
+    }
         
-        if (lengthVectorPermanentCuePrev < lengthVectorPermanentCue) {
-            fadedCues = false;
-        }
-        
-        if (lengthVectorPermanentCue > maxPermanentCuesAtMax && addedCue==true && fadedCues == false) {
-            addedCue = false;
-            fadedCues = true;
-            lengthVectorPermanentCuePrev = lengthVectorPermanentCue;
-            //SORT THE VALUES FROM THE vectorPermanentCue at the vectorPermanentCueTime Order
+    if (lengthVectorPermanentCue > maxPermanentCuesAtMax && addedCue==true && fadedCues == false) {
+        addedCue = false;
+        fadedCues = true;
+        lengthVectorPermanentCuePrev = lengthVectorPermanentCue;
+        //SORT THE VALUES FROM THE vectorPermanentCue at the vectorPermanentCueTime Order
+        sort(vectorPermanentCue.begin(), vectorPermanentCue.end(), vectorCompare(vectorPermanentCueTime));
 
-            sort(vectorPermanentCue.begin(), vectorPermanentCue.end(), vectorCompare(vectorPermanentCueTime));
-
-            //sort(vectorPermanentCueTime.begin(),vectorPermanentCueTime.end());
-            for (int i = 0; i < lengthVectorPermanentCue;i++){
-                int resetGridX = round(vectorPermanentCue[i]/100)-1;
-                int resetGridY = round((vectorPermanentCue[i]-(1+resetGridX)*100)/10)-1;
-                int resetGridZ = round(vectorPermanentCue[i]-(1+resetGridX)*100-(1+resetGridY)*10)-1;
-                ofxOscMessage m;
-                if (i<maxPermanentCuesAtMax){
-                    //SET NORMAL LEVEL HERE
-                    if (arrayFadeOut6Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut12Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==0 && vectorPermanentCue[i]>2){
+        //sort(vectorPermanentCueTime.begin(),vectorPermanentCueTime.end());
+        for (int i = 0; i < lengthVectorPermanentCue;i++){
+            int resetGridX = round(vectorPermanentCue[i]/100)-1;
+            int resetGridY = round((vectorPermanentCue[i]-(1+resetGridX)*100)/10)-1;
+            int resetGridZ = round(vectorPermanentCue[i]-(1+resetGridX)*100-(1+resetGridY)*10)-1;
+            ofxOscMessage m;
+            if (i<maxPermanentCuesAtMax){
+                //SET NORMAL LEVEL HERE
+                if (arrayFadeOut6Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut12Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==0 && vectorPermanentCue[i]>2){
                         
+                    m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
+                        sender_QLAB.sendMessage(m);
+                }
+            } else {
+
+                int timeCheck = ofGetElapsedTimef();
+                    
+                if (i>maxPermanentCues) {
+                    if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 15 && (arrayFadeOut6Sent[resetGridX][resetGridY][resetGridZ]==1 || arrayFadeOut12Sent[resetGridX][resetGridY][resetGridZ]==1 || arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]==1 || arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==1)){
+                        m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/stop");
+                        sender_QLAB.sendMessage(m);
                         m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
                         sender_QLAB.sendMessage(m);
+                        //Not playing anymore
+                        arrayRequesting [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayPlaying [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayTime [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayPotentialFade [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayLastTimePlayed [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayFadeOut6Sent [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayFadeOut12Sent [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayFadeOut18Sent [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayFadeOut25Sent [resetGridX][resetGridY][resetGridZ] = 0;
                     }
                 } else {
 
-                    int timeCheck = ofGetElapsedTimef();
-                    
-                    if (i>maxPermanentCues) {
-                        if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 15 && (arrayFadeOut6Sent[resetGridX][resetGridY][resetGridZ]==1 || arrayFadeOut12Sent[resetGridX][resetGridY][resetGridZ]==1 || arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]==1 || arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==1)){
-                            m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/stop");
-                            sender_QLAB.sendMessage(m);
-                            m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
-                            sender_QLAB.sendMessage(m);
-                            //Not playing anymore
-                            arrayRequesting [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayPlaying [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayTime [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayPotentialFade [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayLastTimePlayed [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayFadeOut6Sent [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayFadeOut12Sent [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayFadeOut18Sent [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayFadeOut25Sent [resetGridX][resetGridY][resetGridZ] = 0;
-
-                        }
-                    } else {
-
-                        switch (i) {
-                            case maxPermanentCuesAtMax + 1:
-                                //SET FIRST DROP DOWN LEVEL
-                                if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 10 && arrayFadeOut12Sent[resetGridX][resetGridY][resetGridZ]== 0 && arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==0){
-                                    m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -6");
-                                    sender_QLAB.sendMessage(m);
-                                    arrayFadeOut6Sent[resetGridX][resetGridY][resetGridZ]=1;
-                                }
-                                break;
-                            case maxPermanentCuesAtMax + 2:
-                                //SET SECOND DROP DOWN LEVEL
-                                if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 10 && arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==0){
-                                    m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -12");
-                                    sender_QLAB.sendMessage(m);
-                                    arrayFadeOut12Sent[resetGridX][resetGridY][resetGridZ]=1;
-                                }
-                                break;
-                            case maxPermanentCuesAtMax + 3:
-                                //SET THIRD DROP DOWN LEVEL
-                                if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 10 && arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==0){
-                                    m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -18");
-                                    sender_QLAB.sendMessage(m);
-                                    arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]=1;
-                                }
-                                break;
-                            case maxPermanentCuesAtMax + 4:
-                                //SET LAST DROP DOWN LEVEL
-                                if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 10){
-                                    m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -25");
-                                    sender_QLAB.sendMessage(m);
-                                    arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]=1;
-                                }
-                                break;
-                        }
+                    switch (i) {
+                        case maxPermanentCuesAtMax + 1:
+                            //SET FIRST DROP DOWN LEVEL
+                            if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 10 && arrayFadeOut12Sent[resetGridX][resetGridY][resetGridZ]== 0 && arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==0){
+                                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -6");
+                                sender_QLAB.sendMessage(m);
+                                arrayFadeOut6Sent[resetGridX][resetGridY][resetGridZ]=1;
+                            }
+                            break;
+                        case maxPermanentCuesAtMax + 2:
+                            //SET SECOND DROP DOWN LEVEL
+                            if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 10 && arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]==0 && arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==0){
+                                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -12");
+                                sender_QLAB.sendMessage(m);
+                                arrayFadeOut12Sent[resetGridX][resetGridY][resetGridZ]=1;
+                            }
+                            break;
+                        case maxPermanentCuesAtMax + 3:
+                            //SET THIRD DROP DOWN LEVEL
+                            if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 10 && arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]==0){
+                                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -18");
+                                sender_QLAB.sendMessage(m);
+                                arrayFadeOut18Sent[resetGridX][resetGridY][resetGridZ]=1;
+                            }
+                            break;
+                        case maxPermanentCuesAtMax + 4:
+                            //SET LAST DROP DOWN LEVEL
+                            if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 10){
+                                m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 -25");
+                                sender_QLAB.sendMessage(m);
+                                arrayFadeOut25Sent[resetGridX][resetGridY][resetGridZ]=1;
+                            }
+                            break;
+                    }
                         
-                        if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 600){
-                            m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/stop");
-                            sender_QLAB.sendMessage(m);
-                            m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
-                            sender_QLAB.sendMessage(m);
-                            //Not playing anymore
-                            arrayRequesting [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayPlaying [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayTime [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayPotentialFade [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayLastTimePlayed [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayFadeOut6Sent [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayFadeOut12Sent [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayFadeOut18Sent [resetGridX][resetGridY][resetGridZ] = 0;
-                            arrayFadeOut25Sent [resetGridX][resetGridY][resetGridZ] = 0;
-                        }
+                    if (timeCheck-arrayTime[resetGridX][resetGridY][resetGridZ] > 600){
+                        m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/stop");
+                        sender_QLAB.sendMessage(m);
+                        m.setAddress("/cue/"+ofToString(vectorPermanentCue[i])+"/sliderLevel/0 0");
+                        sender_QLAB.sendMessage(m);
+                        //Not playing anymore
+                        arrayRequesting [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayPlaying [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayTime [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayPotentialFade [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayLastTimePlayed [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayFadeOut6Sent [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayFadeOut12Sent [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayFadeOut18Sent [resetGridX][resetGridY][resetGridZ] = 0;
+                        arrayFadeOut25Sent [resetGridX][resetGridY][resetGridZ] = 0;
                     }
                 }
             }
         }
-        
-        // DRAW ALL CONTOURS ON TOP OF THE DETECTED ONES
-        contourFinder.draw(drawingPositionX, drawingPositionY, drawingAreaX, drawingAreaY);
-        
     }
+        
+    // DRAW ALL CONTOURS ON TOP OF THE DETECTED ONES
+    contourFinder.draw(drawingPositionX, drawingPositionY, drawingAreaX, drawingAreaY);
+        
+    
     
     // draw instructions
     ofSetColor(255, 255, 200);
