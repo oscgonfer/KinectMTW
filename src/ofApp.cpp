@@ -387,7 +387,7 @@ void ofApp::draw(){
                 arrayTime[countGridX][countGridY][layerGrid] = ofGetElapsedTimef();
                 arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
             } else {
-                if (arrayRequesting[countGridX][countGridY][layerGrid] == 0 && arrayTime[countGridX][countGridY][layerGrid]>0) {
+                if (arrayRequesting[countGridX][countGridY][layerGrid] == 0 && (ofGetElapsedTimef()-arrayTime[countGridX][countGridY][layerGrid]>timeElapsedMin)) {
                     /*
                     if (ofGetElapsedTimef()-arrayTime[countGridX][countGridY][layerGrid] > timePermanentCue){
                             arrayPotentialFade[countGridX][countGridY][layerGrid] = 1;

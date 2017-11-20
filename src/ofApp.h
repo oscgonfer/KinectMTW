@@ -103,6 +103,7 @@ class ofApp : public ofBaseApp{
     bool VerticalCal = false;
     bool HorizontalCal = false;
     int indexGrid = 0;
+    int timeElapsedMin = 1;
     
     
     // used for sending the osc messages to qlab
