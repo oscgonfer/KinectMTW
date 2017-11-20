@@ -10,27 +10,24 @@
 #include <algorithm>
 #include <iostream>
 #include "ofxSimpleSerial.h"
-
+#include "boost/bind.hpp"
 
 #define HOST "localhost"
 #define PORT_OSC_QLAB 53000
 //#define PORT_OSC_DLIGHT 7000
 
+using namespace std;
 
-struct sortClass {
-    bool operator() (int i, int j) {return(i<j);}
-} sortObject;
-
-struct MyComparator
+struct vectorCompare
 {
-    const vector<float> & value_vector;
+    const vector<int> & value_vector;
     
-    MyComparator(const vector<float> & val_vec):
+    vectorCompare(const vector<int> & val_vec):
     value_vector(val_vec) {}
     
     bool operator()(int i1, int i2)
     {
-        return value_vector[i1] < value_vector[i2];
+        return value_vector[i1] > value_vector[i2];
     }
 };
 
@@ -42,7 +39,7 @@ class ofApp : public ofBaseApp{
     void update();
     void draw();
     void exit();
-    
+        
     void drawPointCloud();
     
     void keyPressed(int key);
@@ -93,9 +90,13 @@ class ofApp : public ofBaseApp{
 
     int arrayRequesting[totNumBox][totNumBox][totNumBox];
     int arrayPlaying[totNumBox][totNumBox][totNumBox];
-    float arrayTime[totNumBox][totNumBox][totNumBox];
+    int arrayTime[totNumBox][totNumBox][totNumBox];
     int arrayPotentialFade[totNumBox][totNumBox][totNumBox];
     float arrayLastTimePlayed[totNumBox][totNumBox][totNumBox];
+    int arrayFadeOut6Sent[totNumBox][totNumBox][totNumBox];
+    int arrayFadeOut12Sent[totNumBox][totNumBox][totNumBox];
+    int arrayFadeOut18Sent[totNumBox][totNumBox][totNumBox];
+    int arrayFadeOut25Sent[totNumBox][totNumBox][totNumBox];
     int layerGrid = 0;
     bool resetAll = false;
     int timePermanentCue = 5;
