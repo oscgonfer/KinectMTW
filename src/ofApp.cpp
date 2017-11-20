@@ -374,12 +374,7 @@ void ofApp::draw(){
                 arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
             } else {
                 if (arrayRequesting[countGridX][countGridY][layerGrid] == 0 && arrayTime[countGridX][countGridY][layerGrid]>0) {
-                    if (ofGetElapsedTimef()-arrayTime[countGridX][countGridY][layerGrid] > timePermanentCue){
-                        arrayPotentialFade[countGridX][countGridY][layerGrid] = 1;
-                        if (arrayPlaying[countGridX][countGridY][layerGrid] == 1 && fadedCues == false) {
-                            addedCue=true;
-                        }
-                    } else {
+                    if (ofGetElapsedTimef()-arrayTime[countGridX][countGridY][layerGrid] > maxTimeCuePlaying){
                         ofxOscMessage m;
                         m.setAddress("/cue/"+ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/stop");
                         sender_QLAB.sendMessage(m);
@@ -387,12 +382,29 @@ void ofApp::draw(){
                         arrayTime[countGridX][countGridY][layerGrid] = 0;
                         arrayLastTimePlayed[countGridX][countGridY][layerGrid]=ofGetElapsedTimef();
                         arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
+                        
+                        //HERE TO ADD TO POTENTIAL CUE FADING // DEPRECATED HERE
+                        /*arrayPotentialFade[countGridX][countGridY][layerGrid] = 1;
+                        if (arrayPlaying[countGridX][countGridY][layerGrid] == 1 && fadedCues == false) {
+                            addedCue=true;
+                        }*/
+                    } else {
+                        if (ofGetElapsedTimef()-arrayTime[countGridX][countGridY][layerGrid] < timePermanentCue){
+                                ofxOscMessage m;
+                                m.setAddress("/cue/"+ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(layerGrid+1)+"/stop");
+                                sender_QLAB.sendMessage(m);
+                                arrayPlaying[countGridX][countGridY][layerGrid] = 0;
+                                arrayTime[countGridX][countGridY][layerGrid] = 0;
+                                arrayLastTimePlayed[countGridX][countGridY][layerGrid]=ofGetElapsedTimef();
+                                arrayPotentialFade[countGridX][countGridY][layerGrid] = 0;
+                        }
                     }
                 }
             }
+            
         }
         
-        
+        /*
         for (int countGridX = 0; countGridX < totNumBox; countGridX++)
         {
             for (int countGridY = 0; countGridY < totNumBox; countGridY++){
@@ -405,13 +417,13 @@ void ofApp::draw(){
                     }
                 }
             }
-        }
+        }*/
     }
     
     if (lengthVectorPermanentCuePrev < lengthVectorPermanentCue) {
         fadedCues = false;
     }
-    
+    /*
     if (lengthVectorPermanentCue > maxPermanentCuesAtMax){//} && addedCue==true && fadedCues == false) {
         addedCue = false;
         fadedCues = true;
@@ -509,7 +521,7 @@ void ofApp::draw(){
                 }
             }
         }
-    }
+    }*/
     
     // DRAW ALL CONTOURS ON TOP OF THE DETECTED ONES
     contourFinder.draw(drawingPositionX, drawingPositionY, drawingAreaX, drawingAreaY);

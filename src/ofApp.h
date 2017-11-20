@@ -88,7 +88,7 @@ public:
     int arrayFadeOut25Sent[totNumBox][totNumBox][totNumBox];
     int layerGrid = 0;
     bool resetAll = false;
-    int timePermanentCue = 5;
+
 #define maxPermanentCuesAtMax 2
     int maxPermanentCues = maxPermanentCuesAtMax + 2;
     int lengthVectorPermanentCuePrev = 1000;
@@ -103,6 +103,9 @@ public:
     bool VerticalCal = false;
     bool HorizontalCal = false;
     int indexGrid = 0;
+    //TIMING FOR CUES
+    int timePermanentCue = 3;
+    int maxTimeCuePlaying = 15; //Maximum time for a cue to play
     
     
     // used for sending the osc messages to qlab
