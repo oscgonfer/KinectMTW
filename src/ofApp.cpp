@@ -330,21 +330,7 @@ void ofApp::draw(){
             reportStream3 << "P position" <<p.x<<" - "<<p.y<< endl;
             
             ofDrawBitmapString(reportStream3.str(), 500, 600);
-            // RECTANGLE REMAPPING
-            /*ofRectangle r = contourFinder.blobs.at(i).boundingRect;
-             
-             r.x /= kinect.width;
-             r.x *= drawingAreaX;
-             r.x += drawingPositionX;
-             r.y /= kinect.height;
-             r.y *= drawingAreaY;
-             r.y += drawingPositionY;
-             r.width /= kinect.width;
-             r.width *= drawingAreaX;
-             r.height /= kinect.height;
-             r.height *= drawingAreaY;
-             */
-            //}
+
             
         }
         

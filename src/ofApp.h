@@ -64,7 +64,7 @@ public:
     float roomSizeY;
     
 #define totNumBox 4
-    int minArea = 500;
+    int minArea = 350;
     
     int drawingAreaX;
     int drawingAreaY;
