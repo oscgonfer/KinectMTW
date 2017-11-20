@@ -164,30 +164,34 @@ void ofApp::update(){
             switch (numBytes) {
                 case 1:
                     layerGrid = 0;
-
+                    resetAll = false;
                     break;
                 case 2:
                     layerGrid = 1;
-
+                    resetAll = false;
                     break;
                 case 3:
                     layerGrid = 2;
-
+                    resetAll = false;
                     break;
                 case 4:
                     layerGrid = 3;
-
+                    resetAll = false;
                     break;
                 case 48:
                     resetAll = true;
-                    layerGrid = 0;
                     break;
             }
-            // SEND MESSAGE TO DLIGHT via QLAB
-            ofxOscMessage m;
-            m.setAddress("/cue/" +ofToString((layerGrid+1)*100)+"/start");
-            sender_QLAB.sendMessage(m);
         }
+        // SEND MESSAGE TO DLIGHT via QLAB
+        ofxOscMessage m;
+        if (resetAll == true) {
+            m.setAddress("/cue/999/start");
+        } else {
+            m.setAddress("/cue/" +ofToString((layerGrid+1)*100)+"/start");
+        }
+        sender_QLAB.sendMessage(m);
+
         cout << "layerGrid " << layerGrid << endl;;
     }
 }
@@ -259,10 +263,39 @@ void ofApp::draw(){
         counterBlobs = contourFinder.nBlobs;
     }
     
+    if (resetAll){
+        ofxOscMessage m;
+        
+        m.setAddress("/PanicAll");
+        sender_QLAB.sendMessage(m);
+        // RESET EVERYTHING
+        for (int countLayer = 0; countLayer < 4; countLayer++) {
+            for (int countGridX = 0; countGridX < totNumBox; countGridX++){
+                for (int countGridY = 0; countGridY < totNumBox; countGridY++){
+                    
+                    m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(countLayer+1)+"/sliderLevel/0 0");
+                    sender_QLAB.sendMessage(m);
+                    arrayRequesting [countGridX][countGridY][countLayer]=0;
+                    arrayPlaying [countGridX][countGridY][countLayer]=0;
+                    arrayTime [countGridX][countGridY][countLayer]=0;
+                    arrayPotentialFade [countGridX][countGridY][countLayer]=0;
+                    arrayLastTimePlayed [countGridX][countGridY][countLayer]=0;
+                    arrayFadeOut6Sent[countGridX][countGridY][countLayer]=0;
+                    arrayFadeOut12Sent[countGridX][countGridY][countLayer]=0;
+                    arrayFadeOut18Sent[countGridX][countGridY][countLayer]=0;
+                    arrayFadeOut25Sent[countGridX][countGridY][countLayer]=0;
+                    
+                }
+            }
+        }
+        resetAll = false;
+        layerGrid = 0;
+    }
+    
     for(int i = 0; i < counterBlobs; i++) {
         
 
-        ofPoint p;        
+        ofPoint p;
         if (mouseControl){
             //POINT REMAPPING
 
@@ -322,35 +355,6 @@ void ofApp::draw(){
         int lengthVectorPermanentCue = 0;
         bool addedCue = false;
         
-        if (resetAll){
-            ofxOscMessage m;
-            
-            m.setAddress("/PanicAll");
-            sender_QLAB.sendMessage(m);
-            // RESET EVERYTHING
-            for (int countLayer = 0; countLayer < 4; countLayer++) {
-                for (int countGridX = 0; countGridX < totNumBox; countGridX++){
-                    for (int countGridY = 0; countGridY < totNumBox; countGridY++){
-            
-                        m.setAddress("/cue/" +ofToString(countGridX+1)+ofToString(countGridY+1)+ofToString(countLayer+1)+"/sliderLevel/0 0");
-                        sender_QLAB.sendMessage(m);
-                        arrayRequesting [countGridX][countGridY][countLayer]=0;
-                        arrayPlaying [countGridX][countGridY][countLayer]=0;
-                        arrayTime [countGridX][countGridY][countLayer]=0;
-                        arrayPotentialFade [countGridX][countGridY][countLayer]=0;
-                        arrayLastTimePlayed [countGridX][countGridY][countLayer]=0;
-                        arrayFadeOut6Sent[countGridX][countGridY][countLayer]=0;
-                        arrayFadeOut12Sent[countGridX][countGridY][countLayer]=0;
-                        arrayFadeOut18Sent[countGridX][countGridY][countLayer]=0;
-                        arrayFadeOut25Sent[countGridX][countGridY][countLayer]=0;
-                        
-                    }
-                }
-                m.setAddress("/cue/999/start");
-                sender_QLAB.sendMessage(m);
-                resetAll = false;
-            }
-        }
         
         // CHECK BLOB POSITION AND TRIGGER OSC MESSAGES
         for (int countGridX = 0; countGridX < totNumBox; countGridX++)
