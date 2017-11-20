@@ -53,13 +53,6 @@ void ofApp::setup(){
         drawingPositionY = 270;
     }
     
-    // BOX PARAMETERS
-    boxSize = 80;
-    boxWallDistanceX = 50;
-    boxWallDistanceY = 50;
-    boxDistanceX = (drawingAreaX-(totNumBox*boxSize+2*boxWallDistanceX))/(totNumBox-1);
-    boxDistanceY = (drawingAreaY-(totNumBox*boxSize+2*boxWallDistanceY))/(totNumBox-1);
-    
     //HORIZONTAL GRID
     gridXL[0] = 0;
     gridXR[0] = 264;
@@ -93,7 +86,6 @@ void ofApp::setup(){
                 arrayFadeOut12Sent[n][m][o]=0;
                 arrayFadeOut18Sent[n][m][o]=0;
                 arrayFadeOut25Sent[n][m][o]=0;
-
             }
         }
     }
@@ -577,7 +569,6 @@ void ofApp::draw(){
     << ", fps: " << ofGetFrameRate() << endl
     << "press c to close the connection and o to open it again, connection is: " << kinect.isConnected() << endl
     << "press z to decrease minArea for blob detection and x to increase " << minArea << endl
-    << "press g to increase boxSize and h to increase: " << boxPixelSize <<endl
     << "press p to alternate between calibration and blob detection " << displayCal <<endl
     << "press m to alternate between mouse and blob detection " << mouseControl <<endl
     << "Mouse position " << mouseX << " - "<< mouseY << endl
@@ -690,10 +681,6 @@ void ofApp::keyPressed (int key) {
         case 'x':
             minArea++;
             break;
-        case 'g':
-            boxPixelSize--;
-            if(boxPixelSize<0) boxPixelSize = 0;
-            break;
         case 'p':
             if (displayCal==true) {
                 displayCal=false;
@@ -788,27 +775,3 @@ void ofApp::keyPressed (int key) {
             break;
     }
 }
-
-/*void zipVect(
-    const vector<int> &a,
-    const vector<int> &b,
-    vector<pair<int,int>> &zipped)
-{
-    for(size_t i=0; i<a.size(); ++i)
-    {
-        zipped.push_back(std::make_pair(a[i], b[i]));
-    }
-}
-
-void unzipVect(
-    const vector<std::pair<int, int>> &zipped,
-    vector<int> &a,
-    vector<int> &b)
-{
-    for(size_t i=0; i<a.size(); i++)
-    {
-        a[i] = zipped[i].first;
-        b[i] = zipped[i].second;
-    }
-}
-*/

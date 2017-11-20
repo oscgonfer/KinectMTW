@@ -10,11 +10,9 @@
 #include <algorithm>
 #include <iostream>
 #include "ofxSimpleSerial.h"
-#include "boost/bind.hpp"
 
 #define HOST "localhost"
 #define PORT_OSC_QLAB 53000
-//#define PORT_OSC_DLIGHT 7000
 
 using namespace std;
 
@@ -64,13 +62,6 @@ class ofApp : public ofBaseApp{
     
     float roomSizeX;
     float roomSizeY;
-    float boxWallDistanceX;
-    float boxWallDistanceY;
-    
-    int boxPixelSize;
-    int boxSize;
-    float boxDistanceX;
-    float boxDistanceY;
 
     #define totNumBox 4
     int minArea = 650;
@@ -79,9 +70,7 @@ class ofApp : public ofBaseApp{
     int drawingAreaY;
     int drawingPositionX;
     int drawingPositionY;
-    
-    double boxHorSize;
-    double boxVerSize;
+
 
     float gridXR[totNumBox];
     float gridYR[totNumBox];
